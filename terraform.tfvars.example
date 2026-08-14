@@ -1,0 +1,36 @@
+# Configuração local do Terraform para Fargate
+# Este arquivo contém as variáveis específicas do seu ambiente
+
+# Identidade da aplicação
+app_name    = "my-app"
+environment = "dev"
+aws_region  = "us-east-1"
+
+# Configuração do Container
+container_image = "nginx:latest"  # Substitua pela URL da sua imagem ECR
+container_port  = 80
+container_cpu   = 256
+container_memory = 512
+desired_count   = 1
+
+# Configuração de Rede
+vpc_cidr = "10.0.0.0/16"
+
+# Configuração de Load Balancer
+enable_load_balancer = true
+
+# Configuração de Logs
+log_retention_days = 7
+
+# Variáveis de Ambiente do Container
+container_environment_variables = {
+  ENV = "development"
+  LOG_LEVEL = "info"
+}
+
+# Tags padrão
+tags = {
+  Project     = "Terraform-Fargate"
+  ManagedBy   = "Terraform"
+  Environment = "dev"
+}
