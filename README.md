@@ -205,27 +205,3 @@ terraform destroy
 Revise cuidadosamente os recursos que serão removidos antes de confirmar a operação.
 
 ---
-
-## 📝 Boas práticas
-
-Antes de realizar commits, recomenda-se executar:
-
-```bash
-terraform fmt -recursive
-terraform validate
-terraform plan
-```
-
-Arquivos que normalmente não devem ser versionados:
-
-```gitignore
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfplan
-terraform.tfvars
-.terraform.lock.hcl
-crash.log
-```
-
-> Dependendo da estratégia do projeto, `.terraform.lock.hcl` pode e geralmente deve ser versionado para garantir versões consistentes dos providers.
