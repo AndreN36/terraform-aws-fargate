@@ -15,7 +15,7 @@ output "ecs_service_name" {
 
 output "ecs_service_arn" {
   description = "ARN do serviço ECS"
-  value       = aws_ecs_service.main.arn
+  value       = aws_ecs_service.main.id
 }
 
 output "ecs_task_definition_arn" {
