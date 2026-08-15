@@ -11,21 +11,65 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+ 
       - name: Run tfsec (JSON output)
         run: |
           curl -sL https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o tfsec
           chmod +x tfsec
           ./tfsec . --format json --out results.json --soft-fail
-
+ 
       - name: Build markdown summary
         run: |
-          echo "### tfsec findings" > summary.md
-          echo "" >> summary.md
-          echo "| Rule | Severity | File | Line |" >> summary.md
-          echo "|---|---|---|---|" >> summary.md
-          jq -r '.results[] | "| \(.rule_id) | \(.severity) | \(.location.filename) | \(.location.start_line) |"' results.json >> summary.md
-
+          cat > build-summary.jq << 'EOF'
+          def sevRank:
+            if . == "CRITICAL" then 0
+            elif . == "HIGH" then 1
+            elif . == "MEDIUM" then 2
+            elif . == "LOW" then 3
+            else 4 end;
+ 
+          def sevEmoji:
+            if . == "CRITICAL" then "🟥"
+            elif . == "HIGH" then "🟧"
+            elif . == "MEDIUM" then "🟨"
+            elif . == "LOW" then "⬜"
+            else "" end;
+ 
+          ($results | length) as $total
+          | "### 🛡️ tfsec findings (\($total) issue" + (if $total == 1 then "" else "s" end) + ")\n"
+          , ""
+          , (
+              $results
+              | group_by(.severity)
+              | sort_by(.[0].severity | sevRank)
+              | .[]
+              | ( .[0].severity ) as $sev
+              | "#### " + ($sev | sevEmoji) + " " + $sev + " (" + (length | tostring) + ")"
+              , ""
+              , (
+                  .[]
+                  | "<details>\n<summary><code>" + .rule_id + "</code> — " + .rule_description
+                    + " (`" + (.location.filename | sub($pwd; "")) + "`, line " + (.location.start_line | tostring) + ")</summary>\n"
+                  , ""
+                  , (.description // "" | gsub("\r"; ""))
+                  , ""
+                  , (if (.resolution // "") != "" then "**Resolution:** " + .resolution else empty end)
+                  , (if (.links // [] | length) > 0 then "**Docs:** " + .links[0] else empty end)
+                  , ""
+                  , "</details>"
+                  , ""
+                )
+            )
+          EOF
+ 
+          jq -n -r --argjson results "$(cat results.json | jq '.results // []')" --arg pwd "$PWD/" -f build-summary.jq > summary.md
+ 
+          if [ ! -s summary.md ] || [ "$(jq '.results // [] | length' results.json)" -eq 0 ]; then
+            echo "### 🛡️ tfsec findings" > summary.md
+            echo "" >> summary.md
+            echo "✅ No issues found." >> summary.md
+          fi
+ 
       - name: Post/update sticky PR comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
