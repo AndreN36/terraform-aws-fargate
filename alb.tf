@@ -23,12 +23,15 @@ resource "aws_lb_target_group" "main" {
   protocol         = "HTTP"
   vpc_id           = aws_vpc.main.id
   target_type      = "ip"
-  health_check_healthy_threshold   = 2
-  health_check_unhealthy_threshold = 2
-  health_check_timeout             = 3
-  health_check_interval            = 30
-  health_check_path                = "/"
-  health_check_matcher             = "200"
+
+  health_check {
+  healthy_threshold   = 2
+  unhealthy_threshold = 2
+  timeout             = 3
+  interval            = 30
+  path                = "/"
+  matcher             = "200"
+  }
 
   tags = merge(
     var.tags,
