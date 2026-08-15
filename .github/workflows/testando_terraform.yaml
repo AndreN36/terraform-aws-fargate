@@ -6,10 +6,24 @@ jobs:
   tfsec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install tfsec
-        run: curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-pr-commenter-action@v1.2.0
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run tfsec (JSON output)
+        run: |
+          curl -sL https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o tfsec
+          chmod +x tfsec
+          ./tfsec . --format json --out results.json --soft-fail
+
+      - name: Build markdown summary
+        run: |
+          echo "### tfsec findings" > summary.md
+          echo "" >> summary.md
+          echo "| Rule | Severity | File | Line |" >> summary.md
+          echo "|---|---|---|---|" >> summary.md
+          jq -r '.results[] | "| \(.rule_id) | \(.severity) | \(.location.filename) | \(.location.start_line) |"' results.json >> summary.md
+
+      - name: Post/update sticky PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          github_token: ${{ github.token }}
+          path: summary.md
