@@ -1,7 +1,7 @@
 name: testando_terraform
 run-name: ${{ github.workflow }}-${{ github.run_id }}-${{ github.actor }}
 on:
-  push:
+  pull_request:
 jobs:
   tfsec:
     runs-on: ubuntu-latest
